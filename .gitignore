@@ -1,0 +1,43 @@
+# Gem build artifacts
+*.gem
+pkg/
+
+# Bundle
+.bundle/
+vendor/bundle/
+
+# Environment and secrets
+.env
+.env.*
+
+# Ruby version managers
+.ruby-version
+.ruby-gemset
+.rvmrc
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Coverage and test output
+coverage/
+spec/reports/
+test/reports/
+
+# Documentation cache
+.yardoc/
+doc/
+
+# Byebug / debug
+.byebug_history
+
+# Temporary files
+tmp/
+log/
