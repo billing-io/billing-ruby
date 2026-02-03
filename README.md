@@ -1,8 +1,12 @@
 # billingio
 
-Official Ruby SDK for the [billing.io](https://billing.io) crypto checkout API.
+Official Ruby SDK for the [billing.io](https://billing.io) payments platform.
 
+- Manage customers, payment methods, and payment links
 - Create payment checkouts settled in USDT / USDC on Tron or Arbitrum
+- Recurring billing with subscription plans, renewals, and entitlements
+- Payouts and settlement tracking
+- Revenue events, accounting reports, and adjustments
 - Manage webhook endpoints and verify signatures
 - Query event history with cursor-based pagination
 - Zero runtime dependencies (stdlib only)
@@ -57,6 +61,71 @@ puts status.required_confirmations   # => 19
 puts status.polling_interval_ms      # => 2000
 ```
 
+## Customers
+
+```ruby
+# Create a customer
+customer = client.customers.create(
+  email: "user@example.com",
+  name:  "Jane Doe",
+  metadata: { "org" => "acme" }
+)
+puts customer.customer_id  # => "cus_..."
+
+# List customers
+customers = client.customers.list(limit: 10)
+customers.each { |c| puts c.email }
+
+# Retrieve a customer
+customer = client.customers.get("cus_abc123")
+
+# Update a customer
+customer = client.customers.update("cus_abc123", name: "Jane Smith")
+```
+
+## Payment Methods
+
+```ruby
+# Register a payment method
+pm = client.payment_methods.create(
+  customer_id: "cus_abc123",
+  type:        "wallet",
+  chain:       "tron",
+  token:       "USDT",
+  address:     "T..."
+)
+puts pm.payment_method_id  # => "pm_..."
+
+# List payment methods
+methods = client.payment_methods.list(customer_id: "cus_abc123")
+methods.each { |m| puts "#{m.payment_method_id}: #{m.type}" }
+
+# Update a payment method
+client.payment_methods.update("pm_abc123", metadata: { "label" => "primary" })
+
+# Set as default
+client.payment_methods.set_default("pm_abc123")
+
+# Delete a payment method
+client.payment_methods.delete("pm_abc123")
+```
+
+## Payment Links
+
+```ruby
+# Create a payment link
+link = client.payment_links.create(
+  amount_usd: 25.00,
+  chain:      "tron",
+  token:      "USDT"
+)
+puts link.url  # => "https://pay.billing.io/..."
+
+# List payment links
+links = client.payment_links.list
+links.each { |l| puts "#{l.payment_link_id}: #{l.url}" }
+```
+
 ## Checkouts
 
 ```ruby
@@ -77,6 +146,162 @@ status = client.checkouts.get_status("co_abc123")
 # List checkouts with optional status filter
 list = client.checkouts.list(status: "confirmed", limit: 10)
 list.each { |c| puts c.checkout_id }
+```
+
+## Subscription Plans
+
+```ruby
+# Create a plan
+plan = client.subscription_plans.create(
+  name:       "Pro Monthly",
+  amount_usd: 29.99,
+  interval:   "monthly"
+)
+puts plan.plan_id  # => "plan_..."
+
+# List plans
+plans = client.subscription_plans.list
+plans.each { |p| puts "#{p.plan_id}: #{p.name} ($#{p.amount_usd})" }
+
+# Update a plan
+client.subscription_plans.update("plan_abc123", name: "Pro Plus Monthly")
+```
+
+## Subscriptions
+
+```ruby
+# Create a subscription
+sub = client.subscriptions.create(
+  customer_id: "cus_abc123",
+  plan_id:     "plan_abc123"
+)
+puts sub.subscription_id  # => "sub_..."
+puts sub.status           # => "active"
+
+# List subscriptions
+subs = client.subscriptions.list(customer_id: "cus_abc123", status: "active")
+subs.each { |s| puts "#{s.subscription_id}: #{s.status}" }
+
+# Cancel a subscription
+client.subscriptions.update("sub_abc123", status: "canceled")
+```
+
+## Subscription Renewals
+
+```ruby
+# List renewals
+renewals = client.subscription_renewals.list(subscription_id: "sub_abc123")
+renewals.each { |r| puts "#{r.renewal_id}: #{r.status}" }
+
+# Retry a failed renewal
+renewal = client.subscription_renewals.retry("ren_abc123")
+puts renewal.status  # => "pending"
+```
+
+## Entitlements
+
+```ruby
+# Create an entitlement
+ent = client.entitlements.create(
+  subscription_id: "sub_abc123",
+  feature_key:     "api_calls",
+  value:           10_000
+)
+puts ent.entitlement_id  # => "ent_..."
+
+# List entitlements
+ents = client.entitlements.list(subscription_id: "sub_abc123")
+ents.each { |e| puts "#{e.feature_key}: #{e.value}" }
+
+# Update an entitlement
+client.entitlements.update("ent_abc123", value: 50_000)
+
+# Check entitlement access
+check = client.entitlements.check(
+  customer_id: "cus_abc123",
+  feature_key: "api_calls"
+)
+puts check.entitled    # => true
+puts check.value       # => 50000
+
+# Delete an entitlement
+client.entitlements.delete("ent_abc123")
+```
+
+## Payout Intents
+
+```ruby
+# Create a payout
+payout = client.payout_intents.create(
+  amount_usd:  500.00,
+  chain:       "tron",
+  token:       "USDT",
+  destination: "T..."
+)
+puts payout.payout_id  # => "po_..."
+puts payout.status     # => "pending"
+
+# List payouts
+payouts = client.payout_intents.list(status: "pending")
+payouts.each { |p| puts "#{p.payout_id}: $#{p.amount_usd}" }
+
+# Update a payout
+client.payout_intents.update("po_abc123", metadata: { "ref" => "inv_001" })
+
+# Execute a payout (trigger on-chain transfer)
+payout = client.payout_intents.execute("po_abc123")
+puts payout.status   # => "executing"
+puts payout.tx_hash  # => "0x..."
+```
+
+## Settlements
+
+```ruby
+# List settlements
+settlements = client.settlements.list
+settlements.each do |s|
+  puts "#{s.settlement_id}: $#{s.net_usd} (fee: $#{s.fee_usd})"
+end
+
+# Filter by payout
+settlements = client.settlements.list(payout_id: "po_abc123")
+```
+
+## Revenue Events
+
+```ruby
+# List revenue events
+events = client.revenue_events.list(type: "payment", customer_id: "cus_abc123")
+events.each do |e|
+  puts "#{e.revenue_event_id}: #{e.type} $#{e.amount_usd}"
+end
+
+# Get accounting summary
+report = client.revenue_events.accounting(
+  period_start: "2025-01-01",
+  period_end:   "2025-01-31"
+)
+puts report.total_revenue       # => 12500.00
+puts report.total_fees          # => 125.00
+puts report.total_net           # => 12375.00
+puts report.transaction_count   # => 340
+```
+
+## Adjustments
+
+```ruby
+# Create a revenue adjustment
+adj = client.adjustments.create(
+  type:        "credit",
+  amount_usd:  10.00,
+  reason:      "Goodwill credit",
+  customer_id: "cus_abc123"
+)
+puts adj.adjustment_id  # => "adj_..."
+
+# List adjustments
+adjustments = client.adjustments.list(customer_id: "cus_abc123")
+adjustments.each { |a| puts "#{a.adjustment_id}: #{a.type} $#{a.amount_usd}" }
 ```
 
 ## Webhook Endpoints

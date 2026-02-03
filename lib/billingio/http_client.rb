@@ -37,6 +37,16 @@ module BillingIO
       execute(uri, request)
     end
 
+    def patch(path, body = nil)
+      uri = build_uri(path)
+      request = Net::HTTP::Patch.new(uri)
+      if body
+        request.body = JSON.generate(body)
+        request["Content-Type"] = "application/json"
+      end
+      execute(uri, request)
+    end
+
     def delete(path)
       uri = build_uri(path)
       request = Net::HTTP::Delete.new(uri)

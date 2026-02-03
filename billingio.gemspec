@@ -8,10 +8,11 @@ Gem::Specification.new do |spec|
   spec.authors       = ["billing.io"]
   spec.email         = ["support@billing.io"]
 
-  spec.summary       = "Ruby SDK for the billing.io crypto checkout API"
+  spec.summary       = "Ruby SDK for the billing.io payments platform"
   spec.description   = "Official Ruby client for billing.io -- non-custodial crypto " \
-                        "payment checkouts with stablecoin settlement. Create checkouts, " \
-                        "manage webhooks, verify signatures, and query event history."
+                        "payments with stablecoin settlement. Manage customers, checkouts, " \
+                        "subscriptions, payouts, revenue tracking, entitlements, webhooks, " \
+                        "and more."
   spec.homepage      = "https://github.com/billingio/billingio-ruby"
   spec.license       = "MIT"
 

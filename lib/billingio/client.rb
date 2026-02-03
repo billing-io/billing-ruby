@@ -40,5 +40,60 @@ module BillingIO
     def health
       @health ||= Health.new(@http)
     end
+
+    # @return [BillingIO::Customers]
+    def customers
+      @customers ||= Customers.new(@http)
+    end
+
+    # @return [BillingIO::PaymentMethods]
+    def payment_methods
+      @payment_methods ||= PaymentMethods.new(@http)
+    end
+
+    # @return [BillingIO::PaymentLinks]
+    def payment_links
+      @payment_links ||= PaymentLinks.new(@http)
+    end
+
+    # @return [BillingIO::SubscriptionPlans]
+    def subscription_plans
+      @subscription_plans ||= SubscriptionPlans.new(@http)
+    end
+
+    # @return [BillingIO::Subscriptions]
+    def subscriptions
+      @subscriptions ||= Subscriptions.new(@http)
+    end
+
+    # @return [BillingIO::SubscriptionRenewals]
+    def subscription_renewals
+      @subscription_renewals ||= SubscriptionRenewals.new(@http)
+    end
+
+    # @return [BillingIO::Entitlements]
+    def entitlements
+      @entitlements ||= Entitlements.new(@http)
+    end
+
+    # @return [BillingIO::PayoutIntents]
+    def payout_intents
+      @payout_intents ||= PayoutIntents.new(@http)
+    end
+
+    # @return [BillingIO::Settlements]
+    def settlements
+      @settlements ||= Settlements.new(@http)
+    end
+
+    # @return [BillingIO::RevenueEvents]
+    def revenue_events
+      @revenue_events ||= RevenueEvents.new(@http)
+    end
+
+    # @return [BillingIO::Adjustments]
+    def adjustments
+      @adjustments ||= Adjustments.new(@http)
+    end
   end
 end
